@@ -291,13 +291,11 @@
 
   /* 鼠标悬停时添加阴影及缩放 */
   .image-container:hover img.original {
-    transform: scale(1.05); /* 图片略微放大 */
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* 增加阴影效果 */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6); /* 增加阴影效果 */
   }
 
   /* 鼠标按下时添加特效并切换图片 */
   .image-container:active img.original {
-    transform: scale(0.95); /* 图片按下略微缩小 */
     opacity: 0; /* 使原图淡出 */
   }
 
