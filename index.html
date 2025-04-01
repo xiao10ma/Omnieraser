@@ -1,556 +1,312 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <!-- Meta tags for social media banners, these should be filled in appropriatly as they are your "business card" -->
-  <!-- Replace the content tag with appropriate information -->
-  <meta name="description" content="Discover the OmniEraser, a novel method that seamlessly removes objects and their visual effects">
-  <meta property="og:title" content="OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data"/>
-  <meta property="og:description" content="Discover the OmniEraser, a novel method that seamlessly removes objects and their visual effects"/>
-  <meta property="og:url" content="https://pris-cv.github.io/Omnieraser/"/>
-  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
-  <meta property="og:image" content="static/image/your_banner_image.png" />
-  <meta property="og:image:width" content="1200"/>
-  <meta property="og:image:height" content="630"/>
-
-
-  <!-- Keywords for your paper to be indexed by-->
-  <meta name="keywords" content="KEYWORDS SHOULD BE PLACED HERE">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-  <title>OmniEraser</title>
-
-  <link rel="icon" type="image/x-icon" href="/path/to/your/favicon.ico">
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
-  rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
-  <link rel="stylesheet" href="static/css/bulma.min.css">
-  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
-  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
-  <link rel="stylesheet"
-  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="static/css/index.css">
-
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
-  <script defer src="static/js/fontawesome.all.min.js"></script>
-  <script src="static/js/bulma-carousel.min.js"></script>
-  <script src="static/js/bulma-slider.min.js"></script>
-  <script src="static/js/index.js"></script>
-  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<meta charset="utf-8">
+<meta name="description" content="Discover the OmniEraser, a novel method that seamlessly removes objects and their visual effects">
+<meta property="og:title" content="OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmniEraser</title>
+<!-- Fonts and Libraries -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  
+<!-- Custom Styles -->
+<style>
+body {
+font-family: 'Roboto', sans-serif;
+background: linear-gradient(to bottom, #f7f8fc, #e9ecf7);
+color: #333;
+}
+  
+.hero-header {
+background: linear-gradient(135deg, #00c6ff, #0072ff);
+color: #fff;
+padding: 3rem 1rem;
+text-align: center;
+border-radius: 1rem;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+  
+h1, h2 {
+font-weight: 700;
+}
+  
+.image-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 1rem;
+margin-top: 2rem;
+}
+  
+.image-container {
+position: relative;
+overflow: hidden;
+cursor: pointer;
+border-radius: 15px;
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+  
+.image-container:hover {
+transform: scale(1.05);
+box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+  
+.image-container img {
+width: 100%;
+height: 100%;
+object-fit: cover; /* 保持图片的大小和容器一致 */
+transition: opacity 0.5s ease;
+}
+  
+.image-container .alternate {
+position: absolute;
+top: 0;
+left: 0;
+opacity: 0;
+width: 100%;
+height: 100%;
+object-fit: cover; /* 保持图片的大小和容器一致 */
+}
+  
+.image-container:active .alternate {
+opacity: 1;
+}
+  
+.image-container:active .original {
+opacity: 0;
+}
+  
+</style>
 </head>
 <body>
-  <section class="hero">
-    <div class="hero-body">
-      <div class="container is-max-desktop">
-        <div class="columns is-centered">
-          <div class="column has-text-centered">
-            <h1 class="title is-2 publication-title">OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data</h1>
-            <div class="is-size-5 publication-authors">
-              <!-- Paper authors -->
-              <span class="author-block">
-                <a href="https://scholar.google.com/citations?hl=zh-CN&user=PbO7acIAAAAJ" target="_blank">Runpu Wei</a><sup>* 1</sup>,</span>
-              <span class="author-block">
-                <a  href="https://scholar.google.com/citations?hl=zh-CN&user=fFoWQfsAAAAJ" target="_blank">Zijin Yin</a><sup>* 1</sup>,</span>
-              <span class="author-block">
-                <a href="https://scholar.google.com/citations?hl=zh-CN&user=K6rj4gMAAAAJ" target="_blank">Shuo Zhang</a><sup>* 1</sup>,</span>
-              <span class="author-block">
-                <a  href="https://dblp.org/search?q=LanXiang+Zhou" target="_blank">LanXiang Zhou</a><sup>2</sup>,</span>
-              <span class="author-block">
-                <a  target="_blank">Xueyi Wang</a><sup>1</sup>,</span>
-              <span class="author-block">
-                <a  href="https://dblp.org/pid/295/8850.html" target="_blank">Chao Ban</a><sup>2</sup>,</span>
-              <span class="author-block">
-                <a  href="https://github.com/caotianwei" target="_blank">Tianwei Cao</a><sup>1</sup>,</span>
-              <span class="author-block">
-                <a  href="https://scholar.google.com/citations?hl=en&user=kYnJS5EAAAAJ" target="_blank">Hao Sun</a><sup>2</sup>,</span>
-                <span class="author-block">
-                <a  href="https://dblp.org/pid/348/6925.html" target="_blank">Zhongjiang He</a><sup>2</sup>,</span>
-              <span class="author-block">
-                <a  href="https://scholar.google.com/citations?hl=en&user=dmlkJR4AAAAJ" target="_blank">Kongming Liang</a><sup>1</sup>,</span>
-              <span class="author-block">
-                  <a  href="https://scholar.google.com/citations?user=5GAAs7IAAAAJ&hl=en" target="_blank">Zhanyu Ma</a><sup>1</sup>,</span>
-                  </span>
-                  </div>
-
-                  <div class="is-size-5 publication-authors">
-                    <span class="author-block"><sup>1</sup> PRIS, Beijing University of Posts and Telecommunications
-                      </span>
-                      <span class="author-block"><sup>2</sup> China Telecom Artificial Intelligence Technology Co.Ltd
-  <!--                      Conference name and year-->
-                        </span>
-                    <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span>
-                  </div>
-
-                  <div class="column has-text-centered">
-                    <div class="publication-links">
-                         <!-- CVPR link -->
-                     <!-- <span class="link-block">
-                       <a href="https://openaccess.thecvf.com/content/CVPR2024/html/Tudosiu_MULAN_A_Multi_Layer_Annotated_Dataset_for_Controllable_Text-to-Image_Generation_CVPR_2024_paper.html" target="_blank"
-                       class="external-link button is-normal is-rounded is-dark">
-                       <span class="icon">
-                         <i class="fas fa-file-pdf"></i>
-                       </span>
-                       <span>Paper</span>
-                     </a>
-                    </span> -->
-
-                    <!-- Supplementary PDF link -->
-<!--                    <span class="link-block">-->
-<!--                      <a href="static/pdfs/supplementary_material.pdf" target="_blank"-->
-<!--                      class="external-link button is-normal is-rounded is-dark">-->
-<!--                      <span class="icon">-->
-<!--                        <i class="fas fa-file-pdf"></i>-->
-<!--                      </span>-->
-<!--                      <span>Supplementary</span>-->
-<!--                    </a>-->
-<!--                  </span>-->
-
-                <!-- ArXiv abstract Link -->
-                <span class="link-block">
-                  <a href="https://arxiv.org/abs/2501.07397" target="_blank"
-                  class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-                                  <!-- Github link -->
-                  <span class="link-block">
-                    <a target="_blank"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <img src="static/images/hf-logo-pirate.png" width="80%">
-                    </span>
-                    <span>Dataset (coming soon)</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a target="_blank"
-                  class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <img src="static/images/output.png" width="80%">
-                  </span>
-                  <span>Demo (coming soon)</span>
-                </a>
-              </span>
-              </span>
-                                  <!-- Github link -->
-                  <span class="link-block">
-                    <a href="https://github.com/PRIS-CV/Omnieraser" target="_blank"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <img src="static/images/gitt.png" width="80%">
-                    </span>
-                    <span>Code</span> 
-                  </a>
-                </span>
-                 <!-- <span class="link-block">
-                       <a href="https://mulanrgba.github.io/" target="_blank"
-                       class="external-link button is-normal is-rounded is-dark">
-                       <span class="icon">
-                         <i class="fas fa-file-pdf"></i>
-                       </span>
-                       <span>MuLAn RGBA</span>
-                     </a>
-                    </span> -->
-                </a>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-
-
-<!-- Paper abstract -->
-<section class="section hero is-light">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <p>
-            Inpainting algorithms have achieved remarkable progress in removing objects from images, yet still face two challenges: 1) struggle to handle the object's visual effects such as shadow and reflection; 2) easily generate shape-like artifacts and unintended content. In this paper, we propose Video4Removal, a large-scale dataset comprising over 100,000 high-quality samples with realistic object shadows and reflections. By constructing object-background pairs from video frames with off-the-shelf vision models, the labor costs of data acquisition can be significantly reduced. To avoid generating shape-like artifacts and unintended content, we propose Object-Background Guidance, an elaborated paradigm that takes both the foreground object and background images. It can guide the diffusion process to harness richer contextual information. Based on the above two designs, we present OmniEraser, a novel method that seamlessly removes objects and their visual effects using only object masks as input. Extensive experiments show that OmniEraser significantly outperforms previous methods, particularly in complex in-the-wild scenes. And it also exhibits a strong generalization ability in anime-style images. Datasets, models, and codes will be published.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- End paper abstract -->
-
-
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container" style="text-align:center;">
-      <h2 class="title is-3">Visualization Results</h2>
-      <p style="margin-bottom:1cm;color: rgb(0, 200, 255);font-weight: bold;">
-        Click on any image to see our impeccable removal results.
+  
+<!-- Header Section -->
+<section class="hero-header">
+    <div class="container">
+      <h1 data-aos="fade-up">OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data</h1>
+      <p data-aos="fade-up" data-aos-delay="200">
+        Seamlessly remove objects and their visual effects with innovative paired video-frame data-based solutions.
       </p>
-
-
-      <div class="image-grid">
-
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/0f900fe8-6eab-4f85-8121-29cac9509b94.png">
-          <img class="toggle-image alternate" src="static/images/output/0f900fe8-6eab-4f85-8121-29cac9509b94.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/198b2f55-ccaa-4df4-8216-aab273c8570e.png">
-          <img class="toggle-image alternate" src="static/images/output/198b2f55-ccaa-4df4-8216-aab273c8570e.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/3c43156c-2b44-4ebf-9c47-7707ec60b166.png">
-          <img class="toggle-image alternate" src="static/images/output/3c43156c-2b44-4ebf-9c47-7707ec60b166.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/73ee07ec-7c41-4aef-9769-62213fa00a69.png">
-          <img class="toggle-image alternate" src="static/images/output/73ee07ec-7c41-4aef-9769-62213fa00a69.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/969a07ef-1d5c-42b5-8938-914e3a021781.png">
-          <img class="toggle-image alternate" src="static/images/output/969a07ef-1d5c-42b5-8938-914e3a021781.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/5792ecdb-87b2-4289-ac62-3711063b0cef.png">
-          <img class="toggle-image alternate" src="static/images/output/5792ecdb-87b2-4289-ac62-3711063b0cef.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/ba066105-7fcc-44b5-a20e-7443602d7bb9.png">
-          <img class="toggle-image alternate" src="static/images/output/ba066105-7fcc-44b5-a20e-7443602d7bb9.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/f948ed41-d1f9-4a3b-b40e-9d8c1a9b7c08.png">
-          <img class="toggle-image alternate" src="static/images/output/f948ed41-d1f9-4a3b-b40e-9d8c1a9b7c08.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/5772d5b3-dc43-4b96-ad51-57009287c21c.png">
-          <img class="toggle-image alternate" src="static/images/output/5772d5b3-dc43-4b96-ad51-57009287c21c.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/91105b9a-ca6c-4a8c-a2f7-ea7e121a25e1.png">
-          <img class="toggle-image alternate" src="static/images/output/91105b9a-ca6c-4a8c-a2f7-ea7e121a25e1.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/f8f995cd-335e-481b-a2fe-63389e73e369.png">
-          <img class="toggle-image alternate" src="static/images/output/f8f995cd-335e-481b-a2fe-63389e73e369.png" style="opacity: 0;">
-        </div>
-        <div class="image-container">
-          <img class="toggle-image original" src="static/images/input/67ae0e99-1a2d-488d-b738-24ecf3f45c9a.png">
-          <img class="toggle-image alternate" src="static/images/output/67ae0e99-1a2d-488d-b738-24ecf3f45c9a.png" style="opacity: 0;">
-        </div>
+      <!-- Buttons for Code, Dataset, Demo -->
+      <div class="d-flex justify-content-center mt-4" data-aos="fade-up" data-aos-delay="300">
+        <!-- Code Button -->
+        <a href="https://github.com/PRIS-CV/Omnieraser" target="_blank" class="btn btn-dark btn-lg mx-2">
+          <span class="icon">
+            <img src="static/images/gitt.png" width="25" alt="GitHub">
+          </span>
+          Code
+        </a>
+        <!-- Dataset Button (coming soon) -->
+        <a href="#" target="_blank" class="btn btn-dark btn-lg mx-2" disabled>
+          <span class="icon">
+            <img src="static/images/hf-logo-pirate.png" width="25" alt="Dataset">
+          </span>
+          Dataset (coming soon)
+        </a>
+        <!-- Demo Button (coming soon) -->
+        <a href="#" target="_blank" class="btn btn-dark btn-lg mx-2" disabled>
+          <span class="icon">
+            <img src="static/images/output.png" width="25" alt="Demo">
+          </span>
+          Demo (coming soon)
+        </a>
       </div>
     </div>
-  </div>
+  </section>
+
+<!-- Abstract and Authors Section -->
+<section class="py-5 text-center bg-light" data-aos="fade-up">
+<div class="container is-max-desktop">
+<div class="columns is-centered">
+<div class="column has-text-centered">
+<h2 class="subtitle is-size-5">Authors</h2>
+<div class="is-size-5 publication-authors"> 
+<span class="author-block">
+<a href="https://scholar.google.com/citations?hl=zh-CN&user=PbO7acIAAAAJ" target="_blank">Runpu Wei</a><sup>* 1</sup>,</span>
+<span class="author-block">
+<a href="https://scholar.google.com/citations?hl=zh-CN&user=fFoWQfsAAAAJ" target="_blank">Zijin Yin</a><sup>* 1</sup>,</span>
+<span class="author-block">
+<a href="https://scholar.google.com/citations?hl=zh-CN&user=K6rj4gMAAAAJ" target="_blank">Shuo Zhang</a><sup>* 1</sup>,</span>
+<span class="author-block">
+<a href="https://dblp.org/search?q=LanXiang+Zhou" target="_blank">LanXiang Zhou</a><sup>2</sup>,</span>
+<span class="author-block">
+<a target="_blank">Xueyi Wang</a><sup>1</sup>,</span>
+<span class="author-block">
+<a href="https://dblp.org/pid/295/8850.html" target="_blank">Chao Ban</a><sup>2</sup>,</span>
+<span class="author-block">
+<a href="https://github.com/caotianwei" target="_blank">Tianwei Cao</a><sup>1</sup>,</span>
+<span class="author-block">
+<a href="https://scholar.google.com/citations?hl=en&user=kYnJS5EAAAAJ" target="_blank">Hao Sun</a><sup>2</sup>,</span>
+<span class="author-block">
+<a href="https://dblp.org/pid/348/6925.html" target="_blank">Zhongjiang He</a><sup>2</sup>,</span>
+<span class="author-block">
+<a href="https://scholar.google.com/citations?hl=en&user=dmlkJR4AAAAJ" target="_blank">Kongming Liang</a><sup>1</sup>,</span>
+<span class="author-block">
+<a href="https://scholar.google.com/citations?user=5GAAs7IAAAAJ&hl=en" target="_blank">Zhanyu Ma</a><sup>1</sup>,</span>
+</div>
+</div>
+<div class="is-size-5 publication-authors">
+<span class="author-block" ><sup>1</sup> PRIS, Beijing University of Posts and Telecommunications</span>
+<span class="author-block" ></span><sup>2</sup> China Telecom Artificial Intelligence Technology Co.Ltd</span>
+<span class="eql-cntrb" ><small><br><sup>*</sup>Indicates Equal Contribution</small></span>
+</div>
+</div>
+</div>
+</div>
 </section>
 
-<style>
-
-    /* 分页器样式 */
-    .swiper-pagination {
-  display: none; /* 隐藏分页器 */
-}
-
-  .image-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); 
-    gap: 5px; 
-    justify-items: center;
-    margin-top: 20px;
-  }
-
-  .image-container {
-    position: relative;
-    width: 100%;
-    max-width: 300px;
-    aspect-ratio: 1; 
-  }
-
-  .image-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
-    cursor: pointer;
-    position: absolute;
-    top: 0;
-    left: 0;
-    transition: opacity 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
-  }
-
-  .image-container .alternate {
-    opacity: 0; 
-  }
-
-  /* 鼠标悬停时添加阴影及缩放 */
-  .image-container:hover img.original {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6); /* 增加阴影效果 */
-  }
-
-  /* 鼠标按下时添加特效并切换图片 */
-  .image-container:active img.original {
-    opacity: 0; /* 使原图淡出 */
-  }
-
-  .image-container:active img.alternate {
-    opacity: 1; /* 显示替换图片 */
-  }
-
-</style>
-
-<script>
-
-  function preloadImages() {
-    var images = document.querySelectorAll(".toggle-image");
-    images.forEach(function(img) {
-      var src = img.src;
-      var tempImg = new Image();
-      tempImg.src = src;
-    });
-  }
+<section class="py-5 text-center bg-light" data-aos="fade-up">
+    <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+    <div class="column is-four-fifths">
+    <h2 class="title is-3">Abstract</h2>
+    <div class="content has-text-justified">
+    <p>
+    Inpainting algorithms have achieved remarkable progress in removing objects from images, yet still face two challenges: 1) struggle to handle the object's visual effects such as shadow and reflection; 2) easily generate shape-like artifacts and unintended content. In this paper, we propose Video4Removal, a large-scale dataset comprising over 100,000 high-quality samples with realistic object shadows and reflections. By constructing object-background pairs from video frames with off-the-shelf vision models, the labor costs of data acquisition can be significantly reduced. To avoid generating shape-like artifacts and unintended content, we propose Object-Background Guidance, an elaborated paradigm that takes both the foreground object and background images. It can guide the diffusion process to harness richer contextual information. Based on the above two designs, we present OmniEraser, a novel method that seamlessly removes objects and their visual effects using only object masks as input. Extensive experiments show that OmniEraser significantly outperforms previous methods, particularly in complex in-the-wild scenes. And it also exhibits a strong generalization ability in anime-style images. Datasets, models, and codes will be published.
+    </p>
+    </div>
+    </div>
+    </div>
+    </div>
+</section>
 
 
-  preloadImages();
+<!-- Visualization Results Section -->
+<section class="py-5 bg-light" >
+<div class="container">
+<h2 class="text-center mb-4" data-aos="fade-up">Visualization Results</h2>
+<p class="text-center" style="color: #0072ff; font-weight: bold;" data-aos="fade-up" data-aos-delay="200">Click on any image to see the transformation.</p>
+<div class="image-grid" data-aos="fade-up" data-aos-delay="200">
+<div class="image-container">
+<img class="original" src="static/images/input/0f900fe8-6eab-4f85-8121-29cac9509b94.png" alt="Original Image">
+<img class="alternate" src="static/images/output/0f900fe8-6eab-4f85-8121-29cac9509b94.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/198b2f55-ccaa-4df4-8216-aab273c8570e.png" alt="Original Image">
+<img class="alternate" src="static/images/output/198b2f55-ccaa-4df4-8216-aab273c8570e.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/3c43156c-2b44-4ebf-9c47-7707ec60b166.png" alt="Original Image">
+<img class="alternate" src="static/images/output/3c43156c-2b44-4ebf-9c47-7707ec60b166.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/73ee07ec-7c41-4aef-9769-62213fa00a69.png" alt="Original Image">
+<img class="alternate" src="static/images/output/73ee07ec-7c41-4aef-9769-62213fa00a69.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/969a07ef-1d5c-42b5-8938-914e3a021781.png" alt="Original Image">
+<img class="alternate" src="static/images/output/969a07ef-1d5c-42b5-8938-914e3a021781.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/5792ecdb-87b2-4289-ac62-3711063b0cef.png" alt="Original Image">
+<img class="alternate" src="static/images/output/5792ecdb-87b2-4289-ac62-3711063b0cef.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/ba066105-7fcc-44b5-a20e-7443602d7bb9.png" alt="Original Image">
+<img class="alternate" src="static/images/output/ba066105-7fcc-44b5-a20e-7443602d7bb9.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/f948ed41-d1f9-4a3b-b40e-9d8c1a9b7c08.png" alt="Original Image">
+<img class="alternate" src="static/images/output/f948ed41-d1f9-4a3b-b40e-9d8c1a9b7c08.png" alt="Processed Image">
+</div>
+<div class="image-container">
+<img class="original" src="static/images/input/5772d5b3-dc43-4b96-ad51-57009287c21c.png" alt="Original Image">
+<img class="alternate" src="static/images/output/5772d5b3-dc43-4b96-ad51-57009287c21c.png" alt="Processed Image">
+</div>
+<div class="image-container">
+    <img class="original" src="static/images/input/91105b9a-ca6c-4a8c-a2f7-ea7e121a25e1.png" alt="Original Image">
+    <img class="alternate" src="static/images/output/91105b9a-ca6c-4a8c-a2f7-ea7e121a25e1.png" alt="Processed Image">
+  </div>
+  <div class="image-container">
+    <img class="original" src="static/images/input/f8f995cd-335e-481b-a2fe-63389e73e369.png" alt="Original Image">
+    <img class="alternate" src="static/images/output/f8f995cd-335e-481b-a2fe-63389e73e369.png" alt="Processed Image">
+  </div>
+  <div class="image-container">
+    <img class="original" src="static/images/input/67ae0e99-1a2d-488d-b738-24ecf3f45c9a.png" alt="Original Image">
+    <img class="alternate" src="static/images/output/67ae0e99-1a2d-488d-b738-24ecf3f45c9a.png" alt="Processed Image">
+  </div>
+</div>
+</div>
+</section>
 
-
-  var imageContainers = document.querySelectorAll(".image-container");
-
-  imageContainers.forEach(function(container) {
-    var originalImg = container.querySelector(".original");
-    var alternateImg = container.querySelector(".alternate");
-
-
-    container.addEventListener("mousedown", function() {
-      originalImg.style.opacity = 0;
-      alternateImg.style.opacity = 1;
-    });
-
-
-    container.addEventListener("mouseup", function() {
-      originalImg.style.opacity = 1;
-      alternateImg.style.opacity = 0;
-    });
-
-
-    container.addEventListener("mouseleave", function() {
-      originalImg.style.opacity = 1;
-      alternateImg.style.opacity = 0;
-    });
-  });
-</script>
-
-
-
-
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container" style="text-align:center;">
-      <h2 class="title is-3">Video4Removal</h2>
-      <p style="margin-bottom:1cm;">
+<!-- Video4Removal Section -->
+<section class="py-5">
+    <div class="container text-center">
+      <h2 class="mb-4" data-aos="fade-up">Video4Removal</h2>
+      <p class="mb-4" data-aos="fade-up" data-aos-delay="200">
         We introduce <strong>Video4Removal</strong>, a new photorealistic dataset for object removal, containing over 10,000 image pairs derived from real-world video recordings.
       </p>
-
-
-      <div class="swiper-container">
-        <div class="swiper-wrapper">
-
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_video4removal_00(1).png" alt="Image 1">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_video4removal_00(2).png" alt="Image 2">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_video4removal_00(3).png" alt="Image 3">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_video4removal_00(4).png" alt="Image 4">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_video4removal_00(5).png" alt="Image 5">
-          </div>
-
+      <!-- Display images in 4 rows -->
+      <div class="image-grid">
+        <div class="image-container">
+          <img src="static/images/sup_vis_video4removal_00(1).png" alt="Image 1" class="img-fluid">
         </div>
-
-        <div class="swiper-pagination"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Swiper JS -->
-<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // 初始化 Swiper
-    const swiper = new Swiper('.swiper-container', {
-      autoplay: {
-        delay: 3000,
-        disableOnInteraction: false,
-      },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-      },
-      loop: true,
-      slidesPerView: 1,
-      spaceBetween: 0,
-
-    });
-  });
-</script>
-
-
-
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container" style="text-align:center;">
-      <h2 class="title is-3">RemovalBench</h2>
-      <p style="margin-bottom:1cm;">
-        We introduce a new benchmark <strong>RemovalBench</strong>, which contains 70 pairs of carefully crafted object and ground-truth examples.Each group of images shows the original image, ground truth, and object mask.
-      </p>
-
-
-      <div class="swiper-container">
-        <div class="swiper-wrapper">
-
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_removal_benchmark_00(1).png" alt="Image 1">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_removal_benchmark_00(2).png" alt="Image 2">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_removal_benchmark_00(3).png" alt="Image 3">
-          </div>
-          <div class="swiper-slide">
-            <img src="static/images/sup_vis_removal_benchmark_00(4).png" alt="Image 4">
-          </div>
-
-
+        <div class="image-container">
+          <img src="static/images/sup_vis_video4removal_00(2).png" alt="Image 2" class="img-fluid">
         </div>
-
-        <div class="swiper-pagination"></div>
+        <div class="image-container">
+          <img src="static/images/sup_vis_video4removal_00(3).png" alt="Image 3" class="img-fluid">
+        </div>
+        <div class="image-container">
+          <img src="static/images/sup_vis_video4removal_00(4).png" alt="Image 4" class="img-fluid">
+        </div>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- Swiper JS -->
-<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-
-    const swiper = new Swiper('.swiper-container', {
-      autoplay: {
-        delay: 3000,
-        disableOnInteraction: false,
-      },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-      },
-      loop: true,
-      slidesPerView: 1,
-      spaceBetween: 0,
-    });
-  });
-</script>
-
-<!-- <section class="hero is-small">
-  <div class="hero-body">
-      <div class="container " style="text-align:center;">
-          <h2 class="title is-3">RemovalBench</h2>
-          <p style="margin-bottom:1cm;">We introduce a new benchmark <strong>RemovalBench</strong>, which contains 70 pairs of carefully crafted object and ground-truth examples.Each group of images shows the original image, ground truth, and object mask.
-          </p>
-      <div>
-       
-        <img id="method_sliding" src="static/images/sup_vis_removal_benchmark_00(1).png" width="60%">
-      </div>
-      </div>
-  </div>
-</section> -->
-
-
-<!-- <section class="hero is-small">
-  <div class="hero-body">
-      <div class="container " style="text-align:center;">
-          <h2 class="title is-3">Results</h2>
-          <p style="margin-bottom:1cm;">
-          </p>
-      <div>
-       
-        <img id="method_sliding" src="static/images/sup_vis_realworld_part1_00.png" width="60%">
-        <img id="method_sliding" src="static/images/sup_vis_realworld_part2_00.png" width="60%">
-        <img id="method_sliding" src="static/images/sup_vis_realworld_part3_00.png" width="60%">
-        <img id="method_sliding" src="static/images/sup_vis_realworld_part4_00.png" width="60%">
-        <img id="method_sliding" src="static/images/sup_vis_realworld_part5_00.png" width="60%">
-      </div>
-      </div>
-  </div>
-</section> -->
-
-
-<!--BibTex citation -->
-  <section class="section" id="BibTeX">
-    <div class="container is-max-desktop content">
-      <h2 class="title">BibTeX</h2>
-      <pre><code>
-@misc{wei2025omnieraserremoveobjectseffects,
-      title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data}, 
-      author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
-      year={2025},
-      eprint={2501.07397},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2501.07397}, 
-}
-      </code></pre>
-    </div>
-</section>
-<!--End BibTex citation -->
-
-<!--
-<section class="section" id="ACKNOWLEDGMENT">
-  <div class="container is-max-desktop content">
-    <h2 class="title">ACKNOWLEDGMENT</h2>
-    <p style="margin-bottom:1cm;">
-    We sincerely thank Zhonghao Yan, Wenzhuo Wu, and Jiayi Gao for their significant contributions to the dataset collection. We also appreciate the insightful support and hardware resources provided by China Telecom Artificial Intelligence Technology Co.Ltd. Additionally, we are grateful to Associate Professor Liang and Professor Ma for their guidance and valuable advice throughout the project.</code></pre>
-    </p>
-  </div>
-</section>
- -->
+  </section>
   
-  <footer class="footer">
-  <div class="container">
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
-
-          <p>
-            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
-            <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
-            Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p>
-
+  <!-- RemovalBench Section -->
+  <section class="py-5 bg-light">
+    <div class="container text-center">
+      <h2 class="mb-4" data-aos="fade-up">RemovalBench</h2>
+      <p class="mb-4" data-aos="fade-up" data-aos-delay="200">
+        We introduce a new benchmark <strong>RemovalBench</strong>, which contains 70 pairs of carefully crafted object and ground-truth examples.
+      </p>
+      <!-- Display images in 4 rows -->
+      <div class="image-grid">
+        <div class="image-container">
+          <img src="static/images/sup_vis_removal_benchmark_00(1).png" alt="Image 1" class="img-fluid">
+        </div>
+        <div class="image-container">
+          <img src="static/images/sup_vis_removal_benchmark_00(2).png" alt="Image 2" class="img-fluid">
+        </div>
+        <div class="image-container">
+          <img src="static/images/sup_vis_removal_benchmark_00(3).png" alt="Image 3" class="img-fluid">
+        </div>
+        <div class="image-container">
+          <img src="static/images/sup_vis_removal_benchmark_00(4).png" alt="Image 4" class="img-fluid">
         </div>
       </div>
     </div>
-  </div>
+  </section>
+
+<!-- Footer -->
+<footer>
+<div class="py-5 bg-dark text-light text-center">
+<p>Built using the Academic Project Page Template.<br>Licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" class="text-light">Creative Commons Attribution-ShareAlike 4.0 License</a>.</p>
+</div>
 </footer>
 
-<!-- Statcounter tracking code -->
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+// Initialize AOS
+AOS.init({
+duration: 1000,
+easing: 'ease-in-out',
+});
   
-<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
-
-    <!-- End of Statcounter Code -->
-
-  </body>
-  </html>
+// Preload alternate images
+const preloadImages = document.querySelectorAll('.alternate');
+preloadImages.forEach((img) => {
+const src = img.src;
+const preloadedImg = new Image();
+preloadedImg.src = src;
+});
+});
+</script>
+</body>
+</html>
