@@ -82,6 +82,30 @@
     .image-container:active .original {
       opacity: 0;
     }
+
+    .citation-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+      overflow-x: auto;
+    }
+
+    .copy-btn {
+      transition: all 0.3s;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+    }
   </style>
 </head>
 
@@ -96,7 +120,7 @@
       </p>
       <!-- Buttons for Code, Dataset, Demo -->
       <div class="d-flex justify-content-center mt-4" data-aos="fade-up" data-aos-delay="300">
-        
+
         <!-- Arxiv Button -->
         <a href="https://arxiv.org/abs/2501.07397" target="_blank" class="btn btn-dark btn-lg mx-2">
           <span class="icon">
@@ -353,10 +377,47 @@
     </div>
   </section>
 
+  <!-- Citation Section -->
+  <section class="py-5" style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef);">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-sm border-0" data-aos="fade-up">
+            <div class="card-header bg-primary text-white">
+              <h3 class="mb-0 text-center">Cite Our Work</h3>
+            </div>
+            <div class="card-body">
+              <div class="citation-box p-4 bg-light rounded">
+                <pre class="m-0" style="font-family: 'Roboto Mono', monospace; font-size: 0.9rem;">
+@misc{wei2025omnieraserremoveobjectseffects,
+      title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data},
+      author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
+      year={2025},
+      eprint={2501.07397},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2501.07397},
+}</pre>
+              </div>
+              <div class="text-center mt-4">
+                <button class="btn btn-primary mx-2 copy-btn" data-clipboard-target=".citation-box pre">
+                  <i class="bi bi-clipboard me-2"></i>Copy Citation
+                </button>
+                <a href="https://arxiv.org/abs/2501.07397" target="_blank" class="btn btn-outline-primary mx-2">
+                  <i class="bi bi-file-earmark-text me-2"></i>View on arXiv
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer>
     <div class="py-5 bg-dark text-light text-center">
-      <p>Built using the Academic Project Page Template.<br>Licensed under a <a
+      <p>This page was built upon the Academic Project Page Template.<br>Licensed under a <a
           href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" class="text-light">Creative Commons
           Attribution-ShareAlike 4.0 License</a>.</p>
     </div>
@@ -366,6 +427,24 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <!-- Clipboard.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+  <script>
+    // Initialize clipboard
+    new ClipboardJS('.copy-btn');
+
+    // Add feedback when copied
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="bi bi-check-circle me-2"></i>Copied!';
+        setTimeout(() => {
+          this.innerHTML = originalText;
+        }, 2000);
+      });
+    });
+  </script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       // Initialize AOS
