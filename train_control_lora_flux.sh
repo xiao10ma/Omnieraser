@@ -1,5 +1,3 @@
-# sdxl
-
 accelerate launch --config_file accelerate.yaml train_control_lora_flux_masked.py \
     --pretrained_model_name_or_path /huggingface/model_hub/FLUX.1-dev \
     --output_dir /aaaidata/weirunpu/diffusers-0.33.0.dev0/flux_control_lora_VDOR_masked \

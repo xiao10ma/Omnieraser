@@ -1,5 +1,3 @@
-# sdxl
-
 accelerate launch --config_file accelerate.yaml train_controlnet_lora_flux.py \
     --pretrained_model_name_or_path /huggingface/model_hub/FLUX.1-dev \
     --controlnet_model_name_or_path /huggingface/model_hub/FLUX.1-dev-Controlnet-Inpainting-Beta \
