@@ -11,12 +11,12 @@ Code release for "OmniEraser: Remove Objects and Their Effects in Images with Pa
 
 ## TODO
 
-| ✅ | Task                         | Expected Update  |
+|  | Task                         | Update  |
 |----|------------------------------|------------------|
-| ☐  | 🤗 **Gradio demo**           | About 10 days         |
-| ☐  | 🖥️ **Training & inference code** | About 30 days         |
-| ☐  | ⚖️ **Model weights**        | TBD             |
-| ☐  | 📂 **Dataset**               | TBD             |
+| ✅ | 🖥️ **Training & inference code** | 04/01/2025 |
+| ☐  | 🤗 **Gradio demo**           | Expected about 10 days |
+| ☐  | ⚖️ **Model weights**        | Under active preparation |
+| ☐  | 📂 **Dataset**               | Under active preparation |
 
 
 ## Citation
