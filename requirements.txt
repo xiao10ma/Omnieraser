@@ -1,0 +1,12 @@
+torch --index-url https://download.pytorch.org/whl/cu118
+torchvision --index-url https://download.pytorch.org/whl/cu118
+tqdm
+safetensors
+tokenizers
+accelerate==1.2.1
+fastapi==0.115.6
+gradio==3.49.0
+tensorboard==2.17.0
+transformers==4.42.0
+bitsandbytes
+-e git+https://github.com/huggingface/diffusers.git
