@@ -60,7 +60,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* 保持图片的大小和容器一致 */
       transition: opacity 0.5s ease;
     }
 
@@ -72,7 +71,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* 保持图片的大小和容器一致 */
     }
 
     .image-container:active .alternate {
@@ -390,14 +388,12 @@
             <div class="card-body">
               <div class="citation-box p-4 bg-light rounded">
                 <pre class="m-0" style="font-family: 'Roboto Mono', monospace; font-size: 0.9rem;">
-@misc{wei2025omnieraserremoveobjectseffects,
-      title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data},
-      author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
-      year={2025},
-      eprint={2501.07397},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2501.07397},
+                  @article{wei2025omnieraserremoveobjectseffects,
+                    title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data},
+                    author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
+                    journal={arXiv preprint arXiv:2501.07397},
+                    year={2025},
+                    url={https://arxiv.org/abs/2501.07397},
 }</pre>
               </div>
               <div class="text-center mt-4">
@@ -429,17 +425,17 @@
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // 初始化轮播图并设置间隔时间（单位：毫秒）
       const videoCarousel = new bootstrap.Carousel(document.getElementById('video4removalCarousel'), {
         interval: 3000  // 3秒切换一次
       });
-      
+
       const benchCarousel = new bootstrap.Carousel(document.getElementById('removalBenchCarousel'), {
         interval: 3000  // 3秒切换一次
       });
     });
-    </script>
+  </script>
   <!-- Clipboard.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
   <script>
