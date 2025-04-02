@@ -464,10 +464,12 @@
 
       // Preload alternate images
       const preloadImages = document.querySelectorAll('.alternate');
-      preloadImages.forEach((img) => {
-        const src = img.src;
-        const preloadedImg = new Image();
-        preloadedImg.src = src;
+      preloadImages.forEach((img, index) => {
+        if (index < 1) { // 限制同时加载的图片数量，比如 5
+          const src = img.src;
+          const preloadedImg = new Image();
+          preloadedImg.src = src;
+        }
       });
     });
   </script>
