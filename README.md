@@ -23,13 +23,11 @@ Code release for "OmniEraser: Remove Objects and Their Effects in Images with Pa
 ## Citation
 If you find this paper useful in your research, please consider citing our paper:
 ```
-@misc{wei2025omnieraserremoveobjectseffects,
-      title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data}, 
-      author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
-      year={2025},
-      eprint={2501.07397},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2501.07397}, 
+@article{wei2025omnieraserremoveobjectseffects,
+title={OmniEraser: Remove Objects and Their Effects in Images with Paired Video-Frame Data},
+author={Runpu Wei and Zijin Yin and Shuo Zhang and Lanxiang Zhou and Xueyi Wang and Chao Ban and Tianwei Cao and Hao Sun and Zhongjiang He and Kongming Liang and Zhanyu Ma},
+journal={arXiv preprint arXiv:2501.07397},
+year={2025},
+url={https://arxiv.org/abs/2501.07397},
 }
 ```
