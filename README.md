@@ -10,7 +10,7 @@ Code release for "OmniEraser: Remove Objects and Their Effects in Images with Pa
 
 
 # News
-- **04/08/2025**: 🤗 We have release our fantastic model at [Gradio demo](https://huggingface.co/theSure/Omnieraser/tree/main) !!
+- **04/08/2025**: 🤗 We have release our fantastic model at [Gradio demo](https://huggingface.co/spaces/theSure/Omnieraser) !!
 - **04/06/2025**: ⚖️ [Omnieraser Model weights (Base version) ](https://huggingface.co/theSure/Omnieraser/tree/main) is released!
 - **04/02/2025**: 🖥️ [Omnieraser Training & inference code (ControlNet version) ](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version) is released!
 - **04/01/2025**: 🖥️ [Omnieraser Training & inference code (Base version) ](https://github.com/PRIS-CV/DemoFusion) is released!
