@@ -14,7 +14,7 @@ This is the code release for paper: "OmniEraser: Remove Objects and Their Effect
 
 ## News
 
-- **Apr 12 2025**: 🎯 We have release [Omnieraser Model weights (ControlNet version)](https://huggingface.co/theSure/Omnieraser_Controlnet_version/tree/main), which enables more accurate object removal with significantly better background consistency, thanks to the assistance of alimama ControlNet. For this weight we consider only the purest object removal, you can find the code and the gradio demo in the [ControlNet_version folder](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version).
+- **Apr 12 2025**: 🎯 We have released the [Omnieraser Model weights (ControlNet version)](https://huggingface.co/theSure/Omnieraser_Controlnet_version/tree/main), which enables more accurate object removal with significantly better background consistency, thanks to the assistance of alimama ControlNet. For this weight we consider only the purest object removal, you can find the code and the gradio demo in the [ControlNet_version folder](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version).
 - **Apr 12 2025**: 🖥️ Omnieraser Inference code (Base & ControlNet version) is released!
 - **Apr 08 2025**: 🤗 We have release our fantastic model demo (Base version) at [Gradio Space](https://huggingface.co/spaces/theSure/Omnieraser) !!
 - **Apr 06 2025**: 🎯 [Omnieraser Model weights (Base version) ](https://huggingface.co/theSure/Omnieraser/tree/main) is released!
