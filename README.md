@@ -15,8 +15,8 @@ This is the code release for paper: "OmniEraser: Remove Objects and Their Effect
 ## News
 
 - **Apr 12 2025**: 🎯 We have released the [Omnieraser Model weights (ControlNet version)](https://huggingface.co/theSure/Omnieraser_Controlnet_version/tree/main), which enables more accurate object removal with significantly better background consistency, thanks to the assistance of [alimama ControlNet](https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Beta). For this weight we consider only the purest object removal, you can find the code and the gradio demo in the [ControlNet_version folder](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version).
-- **Apr 12 2025**: 🖥️ Omnieraser Inference code (Base & ControlNet version) is released!
-- **Apr 08 2025**: 🤗 We have release our fantastic model demo (Base version) at [Gradio Space](https://huggingface.co/spaces/theSure/Omnieraser), have fun with it!!
+- **Apr 12 2025**: 🖥️ Omnieraser Inference and the offline gradio script (Base & ControlNet version) are released!
+- **Apr 08 2025**: 🤗 We have released our fantastic model demo (Base version) at [HuggingFace Spaces](https://huggingface.co/spaces/theSure/Omnieraser), have fun with it!! (Unfortunatey, you cannot sketch mask here due to the compatibility issues with zerogpu, if you need draw mask manually, please use our offline gradio script.)
 - **Apr 06 2025**: 🎯 We have released the [Omnieraser Model weights (Base version) ](https://huggingface.co/theSure/Omnieraser/tree/main)!
 - **Apr 02 2025**: 🖥️ [Omnieraser Training code (ControlNet version) ](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version) is released!
 - **Apr 01 2025**: 🖥️ [Omnieraser Training code (Base version) ](https://github.com/PRIS-CV/Omnieraser/tree/main/) is released!
