@@ -8,7 +8,6 @@ accelerate launch --config_file accelerate.yaml train_controlnet_lora_flux.py \
     --learning_rate 5e-5 \
     --train_batch_size 1 \
     --num_train_epochs 2 \
-    --gradient_accumulation_steps 4 \
     --rank 32 \
     --gaussian_init_lora \
     --logging_dir tensorboard \

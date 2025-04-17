@@ -4,7 +4,7 @@ accelerate launch --config_file accelerate.yaml train_control_lora_flux_masked.p
     --train_data_dir /huggingface/dataset_hub/VideoRemoval/refine_train_dataset \
     --resolution 1024 \
     --guidance_scale 3.5 \
-    --learning_rate 5e-5 \
+    --learning_rate 1e-5 \
     --train_batch_size 1 \
     --num_train_epochs 20 \
     --rank 32 \
