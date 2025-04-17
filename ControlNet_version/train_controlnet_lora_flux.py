@@ -904,24 +904,26 @@ def main(args):
     flux_transformer.to(dtype=weight_dtype, device=accelerator.device)
     flux_controlnet.to(dtype=weight_dtype, device=accelerator.device)
 
-    # enable image inputs
-    with torch.no_grad():
-        initial_input_channels = flux_transformer.config.in_channels
-        new_linear = torch.nn.Linear(
-            flux_transformer.x_embedder.in_features * 2,
-            flux_transformer.x_embedder.out_features,
-            bias=flux_transformer.x_embedder.bias is not None,
-            dtype=flux_transformer.dtype,
-            device=flux_transformer.device,
-        )
-        new_linear.weight.zero_()
-        new_linear.weight[:, :initial_input_channels].copy_(flux_transformer.x_embedder.weight)
-        if flux_transformer.x_embedder.bias is not None:
-            new_linear.bias.copy_(flux_transformer.x_embedder.bias)
-        flux_transformer.x_embedder = new_linear
+    # enable image inputs 
+    # If you want to bring the foreground information in, uncomment these code and change the subsequent code
+    #
+    # with torch.no_grad():
+    #     initial_input_channels = flux_transformer.config.in_channels
+    #     new_linear = torch.nn.Linear(
+    #         flux_transformer.x_embedder.in_features * 2,
+    #         flux_transformer.x_embedder.out_features,
+    #         bias=flux_transformer.x_embedder.bias is not None,
+    #         dtype=flux_transformer.dtype,
+    #         device=flux_transformer.device,
+    #     )
+    #     new_linear.weight.zero_()
+    #     new_linear.weight[:, :initial_input_channels].copy_(flux_transformer.x_embedder.weight)
+    #     if flux_transformer.x_embedder.bias is not None:
+    #         new_linear.bias.copy_(flux_transformer.x_embedder.bias)
+    #     flux_transformer.x_embedder = new_linear
 
-    assert torch.all(flux_transformer.x_embedder.weight[:, initial_input_channels:].data == 0)
-    flux_transformer.register_to_config(in_channels=initial_input_channels * 2, out_channels=initial_input_channels)
+    # assert torch.all(flux_transformer.x_embedder.weight[:, initial_input_channels:].data == 0)
+    # flux_transformer.register_to_config(in_channels=initial_input_channels * 2, out_channels=initial_input_channels)
 
 
     if args.train_norm_layers:
