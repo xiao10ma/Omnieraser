@@ -14,7 +14,7 @@ This is the code release for paper: "OmniEraser: Remove Objects and Their Effect
 
 ## News
 
-- **Apr 18 2025**: 📂 We have open-sourced our [RemovalBench](https://huggingface.co/theSure/Omnieraser_Controlnet_version/tree/main), which we use to evaluate the model as well as our evaluation results.
+- **Apr 18 2025**: 📂 We have open-sourced our [RemovalBench](https://huggingface.co/datasets/BaiLing/RemovalBench/tree/main), which we use to evaluate the model as well as our evaluation results.
 - **Apr 12 2025**: 🎯 We have released the [Omnieraser Model weight (ControlNet version)](https://huggingface.co/theSure/Omnieraser_Controlnet_version/tree/main), which enables more accurate object removal with significantly better background consistency, thanks to the assistance of [alimama ControlNet](https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Beta). For this weight we consider only the purest object removal, you can find the code and the gradio demo in the [ControlNet_version folder](https://github.com/PRIS-CV/Omnieraser/tree/main/ControlNet_version).
 - **Apr 12 2025**: 🖥️ Omnieraser Inference and the offline gradio script (Base & ControlNet version) are released!
 - **Apr 08 2025**: 🤗 We have released our fantastic model demo (Base version) at [HuggingFace Spaces](https://huggingface.co/spaces/theSure/Omnieraser), have fun with it!! (Unfortunatey, you cannot sketch mask here due to the compatibility issues with zerogpu, if you need draw mask manually, please use our offline gradio script.)
