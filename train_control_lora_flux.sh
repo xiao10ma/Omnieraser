@@ -1,4 +1,4 @@
-accelerate launch --config_file accelerate.yaml train_control_lora_flux_masked.py \
+accelerate launch --config_file accelerate.yaml train_control_lora_flux.py \
     --pretrained_model_name_or_path black-forest-labs/FLUX.1-dev \
     --output_dir /aaaidata/weirunpu/diffusers-0.33.0.dev0/flux_control_lora_VDOR_masked \
     --train_data_dir /huggingface/dataset_hub/VideoRemoval/refine_train_dataset \
