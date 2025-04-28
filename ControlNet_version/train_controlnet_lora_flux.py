@@ -22,16 +22,15 @@ import random
 import shutil
 from contextlib import nullcontext
 from pathlib import Path
-from safetensors.torch import load_file
 
 import accelerate
 import numpy as np
 import torch
 import transformers
 from accelerate import Accelerator
+from torchvision.utils import save_image
 from accelerate.logging import get_logger
 from accelerate.utils import DistributedType, ProjectConfiguration, set_seed
-from datasets import load_dataset
 from huggingface_hub import create_repo, upload_folder
 from packaging import version
 from peft import LoraConfig, set_peft_model_state_dict
@@ -51,7 +50,6 @@ from diffusers.training_utils import (
 )
 from diffusers.utils import check_min_version, is_wandb_available, load_image, make_image_grid
 from diffusers.utils.hub_utils import load_or_create_model_card, populate_model_card
-from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
 
 from transformer_flux import FluxTransformer2DModel
@@ -99,9 +97,9 @@ def log_validation(flux_transformer, controlnet, args, accelerator, weight_dtype
             torch_dtype=weight_dtype,
         )
         pipeline.load_lora_weights(args.output_dir)
-        assert (
-            pipeline.transformer.config.in_channels == initial_channels * 2
-        ), f"{pipeline.transformer.config.in_channels=}"
+        # assert (
+        #     pipeline.transformer.config.in_channels == initial_channels * 2
+        # ), f"{pipeline.transformer.config.in_channels=}"
 
     pipeline.to(accelerator.device)
     pipeline.set_progress_bar_config(disable=False)
@@ -143,7 +141,7 @@ def log_validation(flux_transformer, controlnet, args, accelerator, weight_dtype
 
         images = []
 
-        print(args.num_validation_images)
+        # print(args.num_validation_images)
         for _ in range(args.num_validation_images):
             with autocast_ctx:
                 # need to fix in pipeline_flux_controlnet
@@ -151,7 +149,7 @@ def log_validation(flux_transformer, controlnet, args, accelerator, weight_dtype
                     prompt=validation_prompt,
                     control_image=validation_image,
                     control_mask=validation_mask,
-                    num_inference_steps=28,
+                    num_inference_steps=30,
                     controlnet_conditioning_scale=0.9,
                     guidance_scale=args.guidance_scale,
                     true_guidance_scale=1.0, # default: 3.5 for alpha and 1.0 for beta
@@ -265,12 +263,6 @@ def parse_args(input_args=None):
         " If not specified controlnet weights are initialized from unet.",
     )
     parser.add_argument(
-        "--pretrained_lora_path",
-        type=str,
-        default=None,
-        help="Path to pretrained LoRA model",
-    )
-    parser.add_argument(
         "--variant",
         type=str,
         default=None,
@@ -361,7 +353,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--rank",
         type=int,
-        default=32,
+        default=4,
         help=("The dimension of the LoRA update matrices."),
     )
     parser.add_argument("--use_lora_bias", action="store_true", help="If training the bias of lora_B layers.")
@@ -549,7 +541,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--validation_mask",
         type=str,
-        default=["src/test_mask_dilate.jpg"],
+        default=["src/test_mask.jpg"],
         nargs="+",
         help=(
             "A set of paths to the controlnet conditioning image be evaluated every `--validation_steps`"
@@ -593,7 +585,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--guidance_scale",
         type=float,
-        default=1.0,
+        default=3.5,
         help="the guidance scale used for transformer.",
     )
 
@@ -672,47 +664,39 @@ def parse_args(input_args=None):
 
     return args
 
-# def replace_img(path_str):
-#     new_path_str = path_str.replace('mask', 'img')
-#     new_path_str = new_path_str.replace('_M.png', '.jpg')
-#     return new_path_str
-
-# def replace_gt(path_str):
-#     new_path_str = path_str.replace('mask', 'gt')
-#     new_path_str = new_path_str.replace('_M.png', '.jpg')
-#     return new_path_str
-
 
 class TrainRemovalDataset(torch.utils.data.Dataset):
     def __init__(self,
                  data_root,
                  resolution, 
                  preprocess_fn=None):
-        self.root = data_root
-        self.maskroot = os.path.join(self.root, 'mask') # binray mask for inpainting
-        self.imageroot = os.path.join(self.root, 'image') # target image: BG
+        self.root = Path(data_root)
+        self.maskroot = os.path.join(self.root, 'masks') # binray mask for inpainting
+        self.imageroot = os.path.join(self.root, 'images') # target image: BG
         self.bgroot = os.path.join(self.root, 'background') # target image: BG
         
-        # RORD专用，其他数据集请注释。
-        self.maskroot = os.path.join(self.root, 'mask') # binray mask for inpainting
-        self.imageroot = os.path.join(self.root, 'img') # target image: BG
-        self.bgroot = os.path.join(self.root, 'gt') # target image: BG
+        self.filenames = os.listdir(self.maskroot) 
 
-        self.mask_name = os.listdir(self.maskroot)
-        self._length = len(self.mask_name)
+        # self.images_path = list(Path(self.imageroot).iterdir())
+        # self.bg_path = list(Path(self.bgroot).iterdir())
+        # self.mask_path = list(Path(self.maskroot).iterdir())
+
+        self._length = len(self.filenames)
 
         # Store transformation function
         self.resolution = resolution
         self.preprocess_fn = preprocess_fn
-        # print(self.mask_path[1])
+        
         
     def __len__(self):
         return self._length
     
     def __getitem__(self, index):
-        mask = Image.open(os.path.join(self.maskroot, self.mask_name[index])).convert('L') # load the binary mask
-        background = Image.open(os.path.join(self.bgroot, self.mask_name[index])).convert('RGB') # load the target image
-        image = Image.open(os.path.join(self.imageroot, self.mask_name[index])).convert('RGB') # load the target image
+        example = {}
+        filename = self.filenames[index]
+        image = Image.open(os.path.join(self.imageroot, filename)).convert('RGB') # load the target image
+        background = Image.open(os.path.join(self.bgroot, filename)).convert('RGB') # load the target image
+        mask = Image.open(os.path.join(self.maskroot, filename)).convert('L') # load the target image
         
         sample = {
             "images": image,
@@ -755,7 +739,7 @@ def prepare_train_dataset(dataset, accelerator):
 
     def preprocess_train(examples):
         images = examples["images"].convert("RGB") if not isinstance(examples["images"], str) else Image.open(examples["images"]).convert("RGB")
-        images = image_transforms(images) 
+        images = image_transforms(images)
 
         masks = examples["masks"].convert("L") if not isinstance(examples["masks"], str) else Image.open(examples["masks"]).convert("L")
         masks = mask_transforms(masks) # 1是要inpaint的区域，0是背景
@@ -768,7 +752,6 @@ def prepare_train_dataset(dataset, accelerator):
         backgrounds = image_transforms(backgrounds)
         
         examples["pixel_values"] = backgrounds
-        examples["images"] = images
         examples["masked_images"] = masked_images
         examples["masks"] = masks
 
@@ -783,27 +766,22 @@ def prepare_train_dataset(dataset, accelerator):
 def collate_fn(examples):
     pixel_values = torch.stack([example["pixel_values"] for example in examples])
     pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-    images = torch.stack([example["images"] for example in examples])
-    images = images.to(memory_format=torch.contiguous_format).float()
     masked_images = torch.stack([example["masked_images"] for example in examples])
     masked_images = masked_images.to(memory_format=torch.contiguous_format).float()
     masks = torch.stack([example["masks"] for example in examples])
     masks = masks.to(memory_format=torch.contiguous_format).float()
-    
-    # save_dir = '/home/yinzijin/BrushNet-main/examples/brushnet/image_temp'
+
+    # save_dir = '/nvfile-data/cv/zlx/weirunpu-data01/lora/images'
     # os.makedirs(save_dir, exist_ok=True)  
 
-    # for i, example in enumerate(examples):
-    #     pixel_values = example['pixel_values']
-    #     conditioning_pixel_values = example['conditioning_pixel_values']
-    #     mask = example['masks']
-    #     save_image(pixel_values, os.path.join(save_dir, f'pixel_values_{i}.png'), normalize=True)
-    #     save_image(conditioning_pixel_values, os.path.join(save_dir, f'conditioning_pixel_values_{i}.png'), normalize=True)
-    #     save_image(mask, os.path.join(save_dir, f'mask_{i}.png'), normalize=False)
+    # for i, _ in enumerate(pixel_values):
+    #     save_image(pixel_values[i], os.path.join(save_dir, f'pixel_values_{i}.png'), normalize=True)
+    #     save_image(masked_images[i], os.path.join(save_dir, f'conditioning_pixel_values_{i}.png'), normalize=True)
+    #     save_image(masks[i], os.path.join(save_dir, f'mask_{i}.png'), normalize=False)
     
     # assert False
-    
-    return {"pixel_values": pixel_values, "images": images, "masked_images": masked_images, "masks": masks}
+
+    return {"pixel_values": pixel_values, "masked_images": masked_images, "masks": masks}
 
 
 def main(args):
@@ -909,24 +887,23 @@ def main(args):
     flux_controlnet.to(dtype=weight_dtype, device=accelerator.device)
 
     # enable image inputs
-    with torch.no_grad():
-        initial_input_channels = flux_transformer.config.in_channels
-        new_linear = torch.nn.Linear(
-            flux_transformer.x_embedder.in_features * 2,
-            flux_transformer.x_embedder.out_features,
-            bias=flux_transformer.x_embedder.bias is not None,
-            dtype=flux_transformer.dtype,
-            device=flux_transformer.device,
-        )
-        new_linear.weight.zero_()
-        new_linear.weight[:, :initial_input_channels].copy_(flux_transformer.x_embedder.weight)
-        if flux_transformer.x_embedder.bias is not None:
-            new_linear.bias.copy_(flux_transformer.x_embedder.bias)
-        flux_transformer.x_embedder = new_linear
+    # with torch.no_grad():
+    #     initial_input_channels = flux_transformer.config.in_channels
+    #     new_linear = torch.nn.Linear(
+    #         flux_transformer.x_embedder.in_features * 2,
+    #         flux_transformer.x_embedder.out_features,
+    #         bias=flux_transformer.x_embedder.bias is not None,
+    #         dtype=flux_transformer.dtype,
+    #         device=flux_transformer.device,
+    #     )
+    #     new_linear.weight.zero_()
+    #     new_linear.weight[:, :initial_input_channels].copy_(flux_transformer.x_embedder.weight)
+    #     if flux_transformer.x_embedder.bias is not None:
+    #         new_linear.bias.copy_(flux_transformer.x_embedder.bias)
+    #     flux_transformer.x_embedder = new_linear
 
-    assert torch.all(flux_transformer.x_embedder.weight[:, initial_input_channels:].data == 0)
-    flux_transformer.register_to_config(in_channels=initial_input_channels * 2, out_channels=initial_input_channels)
-
+    # assert torch.all(flux_transformer.x_embedder.weight[:, initial_input_channels:].data == 0)
+    # flux_transformer.register_to_config(in_channels=initial_input_channels * 2, out_channels=initial_input_channels)
 
     if args.train_norm_layers:
         for name, param in flux_transformer.named_parameters():
@@ -969,28 +946,6 @@ def main(args):
         # lora_bias=args.use_lora_bias,
     )
     flux_transformer.add_adapter(transformer_lora_config)
-
-    if args.pretrained_lora_path:
-        logger.info(f"Loading from pretrained LoRA checkpoint {args.pretrained_lora_path}")
-        # accelerator.load_state(args.pretrained_lora_path)
-        
-        lora_state_dict = load_file(args.pretrained_lora_path)
-        transformer_lora_state_dict = {
-            f'{k.replace("transformer.", "")}': v
-            for k, v in lora_state_dict.items()
-            if k.startswith("transformer.") and "lora" in k
-        }
-        incompatible_keys = set_peft_model_state_dict(
-            flux_transformer, transformer_lora_state_dict, adapter_name="default"
-        )
-        if incompatible_keys is not None:
-            # check only for unexpected keys
-            unexpected_keys = getattr(incompatible_keys, "unexpected_keys", None)
-            if unexpected_keys:
-                logger.warning(
-                    f"Loading adapter weights from state_dict led to unexpected keys not found in the model: "
-                    f" {unexpected_keys}. "
-                )
 
     def unwrap_model(model):
         model = accelerator.unwrap_model(model)
@@ -1080,7 +1035,7 @@ def main(args):
             # Make sure the trainable params are in float32. This is again needed since the base models
             # are in `weight_dtype`. More details:
             # https://github.com/huggingface/diffusers/pull/6514#discussion_r1449796804
-            if args.mixed_precision == "fp16":
+            if args.mixed_precision == "fp16" or "bf16":
                 models = [transformer_]
                 # only upcast trainable parameters (LoRA) into fp32
                 cast_training_params(models)
@@ -1089,7 +1044,7 @@ def main(args):
         accelerator.register_load_state_pre_hook(load_model_hook)
         
     # Make sure the trainable params are in float32.
-    if args.mixed_precision == "fp16":
+    if args.mixed_precision == "fp16" or "bf16":
         models = [flux_transformer]
         # only upcast trainable parameters (LoRA) into fp32
         cast_training_params(models, dtype=torch.float32)
@@ -1227,16 +1182,13 @@ def main(args):
         else:
             logger.info(f"Resuming from checkpoint {path}")
             accelerator.load_state(os.path.join(args.output_dir, path))
-            #accelerator.load_state(args.resume_from_checkpoint)
             global_step = int(path.split("-")[1])
-            #global_step = 0
 
             initial_global_step = global_step
             first_epoch = global_step // num_update_steps_per_epoch
     else:
         initial_global_step = 0
 
-        
     progress_bar = tqdm(
         range(0, args.max_train_steps),
         initial=initial_global_step,
@@ -1272,22 +1224,11 @@ def main(args):
                     pixel_latents_tmp.shape[2],
                     pixel_latents_tmp.shape[3],
                 )
-
-                images = batch["images"].to(dtype=weight_dtype)
-                images_tmp = encode_images(images, vae.to(accelerator.device), weight_dtype)
-                images = FluxControlNetInpaintingPipeline._pack_latents( # 1, 2304, 64
-                    images_tmp,
-                    images.shape[0],
-                    images_tmp.shape[1],
-                    images_tmp.shape[2],
-                    images_tmp.shape[3],
-                )
                 
                 control_values = batch["masked_images"].to(dtype=weight_dtype)
                 control_latents = encode_images(
                     control_values, vae.to(accelerator.device), weight_dtype
                 )
-                
                 masks = torch.nn.functional.interpolate(
                     batch["masks"], size=(batch["masks"].shape[2] // vae_scale_factor * 2 , batch["masks"].shape[3] // vae_scale_factor * 2)
                     ).to(weight_dtype)
@@ -1320,23 +1261,13 @@ def main(args):
 
                 # Add noise according to flow matching.
                 sigmas = get_sigmas(timesteps, n_dim=pixel_latents.ndim, dtype=pixel_latents.dtype)
-                noisy_model_input = (1.0 - sigmas) * pixel_latents_tmp + sigmas * pixel_latents_tmp # 1, 2304, 64
+                noisy_model_input = (1.0 - sigmas) * pixel_latents + sigmas * noise # 1, 2304, 64
 
-                concatenated_noisy_model_input = torch.cat([noisy_model_input, images_tmp], dim=1)
-                # pack the latents.
-                packed_noisy_model_input = FluxControlNetInpaintingPipeline._pack_latents(
-                    concatenated_noisy_model_input,
-                    batch_size=bsz,
-                    num_channels_latents=concatenated_noisy_model_input.shape[1],
-                    height=concatenated_noisy_model_input.shape[2],
-                    width=concatenated_noisy_model_input.shape[3],
-                )
-                
                 # pack the latents.
                 latent_image_ids = FluxControlNetInpaintingPipeline._prepare_latent_image_ids( # 1, 2304, 3
                     pixel_latents_tmp.shape[0],
-                    concatenated_noisy_model_input.shape[2] // 2,
-                    concatenated_noisy_model_input.shape[3] // 2,
+                    pixel_latents_tmp.shape[2],
+                    pixel_latents_tmp.shape[3],
                     accelerator.device,
                     weight_dtype,
                 )
@@ -1540,5 +1471,4 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
-
 
