@@ -54,7 +54,7 @@ from diffusers.utils.torch_utils import is_compiled_module
 
 from transformer_flux import FluxTransformer2DModel
 from controlnet_flux import FluxControlNetModel
-from pipeline_flux_controlnet_inpaint import FluxControlNetInpaintingPipeline
+from pipeline_flux_controlnet_removal import FluxControlNetInpaintingPipeline
 
 
 if is_wandb_available():
