@@ -7,7 +7,7 @@ import numpy as np
 from diffusers.utils import load_image, check_min_version
 from controlnet_flux import FluxControlNetModel
 from transformer_flux import FluxTransformer2DModel
-from pipeline_flux_controlnet_inpaint import FluxControlNetInpaintingPipeline
+from pipeline_flux_controlnet_removal import FluxControlNetInpaintingPipeline
 
 check_min_version("0.30.2")
 
