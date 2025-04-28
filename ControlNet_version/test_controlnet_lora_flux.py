@@ -20,7 +20,7 @@ os.makedirs(outputs_path, exist_ok=True)
 # Build pipeline
 controlnet = FluxControlNetModel.from_pretrained("alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Beta", torch_dtype=torch.bfloat16)
 transformer = FluxTransformer2DModel.from_pretrained(
-        "black-forest-labs/FLUX.1-deb", subfolder='transformer', torch_dtype=torch.bfloat16
+        "black-forest-labs/FLUX.1-dev", subfolder='transformer', torch_dtype=torch.bfloat16
     )
 pipe = FluxControlNetInpaintingPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev",
