@@ -10,7 +10,7 @@ from PIL import Image, ImageCms
 import torch
 from controlnet_flux import FluxControlNetModel
 from transformer_flux import FluxTransformer2DModel
-from pipeline_flux_controlnet_inpaint import FluxControlNetInpaintingPipeline
+from pipeline_flux_controlnet_removal import FluxControlNetInpaintingPipeline
 
 
 torch.set_grad_enabled(False)
