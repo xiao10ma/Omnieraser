@@ -5,7 +5,7 @@ accelerate launch --config_file accelerate.yaml train_controlnet_lora_flux.py \
     --train_data_dir /huggingface/dataset_hub/RORD/train_datasets \
     --resolution 1024 \
     --guidance_scale 3.5 \
-    --learning_rate 5e-5 \
+    --learning_rate 3e-5 \
     --train_batch_size 1 \
     --num_train_epochs 2 \
     --rank 32 \
