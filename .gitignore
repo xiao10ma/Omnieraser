@@ -1,0 +1,7 @@
+dataset/
+output/
+merged_model/
+
+*.pyc
+*.png
+

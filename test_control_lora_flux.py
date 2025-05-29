@@ -1,3 +1,4 @@
+import os
 import torch
 from diffusers.utils import load_image, check_min_version
 from diffusers import FluxTransformer2DModel
@@ -6,9 +7,16 @@ from pipeline_flux_control_removal import FluxControlRemovalPipeline
 check_min_version("0.30.2")
 
 # Set image path , mask path and prompt
-image_path='example/image/0bce8e90-10f1-442e-8330-2917fc7fa486.png'
-mask_path='example/mask/0bce8e90-10f1-442e-8330-2917fc7fa486.png'
+name = 'input2.png'
+images_path='example/image'
+masks_path='example/mask'
+outputs_path='example/output'
+os.makedirs(outputs_path, exist_ok=True)
 prompt='There is nothing here.'
+
+image_path = os.path.join(images_path, name)
+mask_path = os.path.join(masks_path, name)
+output_path = os.path.join(outputs_path, name)
 
 # Build pipeline
 transformer = FluxTransformer2DModel.from_pretrained('black-forest-labs/FLUX.1-dev', 
@@ -48,7 +56,9 @@ pipe.load_lora_weights('theSure/Omnieraser',
 
 # Load image and mask
 size = (1024, 1024)
-image = load_image(image_path).convert("RGB").resize(size)
+image = load_image(image_path)
+original_size = image.size
+image = image.convert("RGB").resize(size)
 mask = load_image(mask_path).convert("RGB").resize(size)
 generator = torch.Generator(device="cuda").manual_seed(24)
 
@@ -65,5 +75,5 @@ result = pipe(
     width=size[0],
 ).images[0]
 
-result.save('flux_inpaint.png')
+result.resize(original_size).save(output_path)
 print("Successfully inpaint image")
