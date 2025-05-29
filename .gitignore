@@ -4,4 +4,6 @@ merged_model/
 
 *.pyc
 *.png
-
+*.pth
+*.safetensors
+*.json
