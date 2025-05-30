@@ -645,12 +645,6 @@ class FluxControlRemovalPipeline(
             image_latents - self.vae.config.shift_factor
         ) * self.vae.config.scaling_factor
         image_latents = image_latents.to(dtype)
-
-        foreground_image_latents = self.vae.encode(foreground_images.to(self.vae.dtype)).latent_dist.sample()
-        foreground_image_latents = (
-            foreground_image_latents - self.vae.config.shift_factor
-        ) * self.vae.config.scaling_factor
-        foreground_image_latents = foreground_image_latents.to(dtype)
         
         masked_image_latents = self.vae.encode(masked_image.to(self.vae.dtype)).latent_dist.sample()
         masked_image_latents = (
@@ -670,7 +664,7 @@ class FluxControlRemovalPipeline(
         #     mask, size=(height // self.vae_scale_factor, width // self.vae_scale_factor)
         # )
 
-        control_image = torch.cat([masked_image_latents, foreground_image_latents, masks], dim=1) # bs, 16+16+16=48, h, w
+        control_image = torch.cat([masked_image_latents, masks], dim=1) # bs, 16+16=32, h, w
 
         # Pack cond latents
         packed_control_image = self._pack_latents(
@@ -854,7 +848,7 @@ class FluxControlRemovalPipeline(
         )
 
         # 4. Prepare latent variables
-        num_channels_latents = (self.transformer.config.in_channels)  // 16 # 16
+        num_channels_latents = 16 # 16
         # print(num_channels_latents)
         # print(self.transformer.config.in_channels)
         control_image, height, width = self.prepare_image_with_mask(

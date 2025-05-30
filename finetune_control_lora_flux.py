@@ -94,7 +94,7 @@ def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_f
         )
         pipeline.load_lora_weights(args.output_dir)
         assert (
-            pipeline.transformer.config.in_channels == initial_channels * 4
+            pipeline.transformer.config.in_channels == initial_channels * 3
         ), f"{pipeline.transformer.config.in_channels=}"
 
     pipeline.to(accelerator.device)
@@ -788,6 +788,8 @@ class TrainRemovalDataset(torch.utils.data.Dataset):
         if mask is None:
             mask = np.asarray(fore_mask) == 0
             mask = Image.fromarray(mask)
+        else:
+            mask = Image.fromarray(mask)
         
         sample = {
             "images": image,
@@ -974,11 +976,19 @@ def main(args):
     vae.to(dtype=torch.float32)  # keep the VAE in float32.
     flux_transformer.to(dtype=weight_dtype, device=accelerator.device)
 
-    expanded_mlp = torch.nn.Linear(256, 3072, bias=True).to(torch.bfloat16).to("cuda")
+    original_mlp = torch.nn.Linear(256, 3072, bias=True).to(torch.bfloat16).to("cuda")
+    original_mlp.load_state_dict(torch.load("./expanded_x_embedder.pth"))
 
-    expanded_mlp.load_state_dict(torch.load("./expanded_x_embedder.pth"))
+    expanded_mlp = torch.nn.Linear(192, 3072, bias=True).to(torch.bfloat16).to("cuda")
+    with torch.no_grad():
+        old_weight = original_mlp.weight  # shape: [3072, 256]
+        new_weight = torch.cat([old_weight[:, :128], old_weight[:, 192:]], dim=1)  # [3072, 192]
+        expanded_mlp.weight.copy_(new_weight)
+
+        if original_mlp.bias is not None:
+            expanded_mlp.bias.copy_(original_mlp.bias)  # bias shape: [3072]
     flux_transformer.x_embedder = expanded_mlp
-    flux_transformer.register_to_config(in_channels=flux_transformer.config.in_channels * 4)
+    flux_transformer.register_to_config(in_channels=flux_transformer.config.in_channels * 3)
 
     if args.train_norm_layers:
         for name, param in flux_transformer.named_parameters():
@@ -1101,7 +1111,7 @@ def main(args):
                 with torch.no_grad():
                     initial_input_channels = transformer_.config.in_channels # 64
                     new_linear = torch.nn.Linear(
-                        transformer_.x_embedder.in_features*4,
+                        transformer_.x_embedder.in_features*3,
                         transformer_.x_embedder.out_features,
                         bias=transformer_.x_embedder.bias is not None,
                         dtype=transformer_.dtype,
@@ -1112,7 +1122,7 @@ def main(args):
                     if transformer_.x_embedder.bias is not None:
                         new_linear.bias.copy_(transformer_.x_embedder.bias)
                     transformer_.x_embedder = new_linear
-                    transformer_.register_to_config(in_channels=initial_input_channels*4)
+                    transformer_.register_to_config(in_channels=initial_input_channels*3)
 
                 transformer_.add_adapter(transformer_lora_config)
 
