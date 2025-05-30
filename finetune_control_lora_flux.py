@@ -836,17 +836,11 @@ def prepare_train_dataset(dataset, accelerator):
         
         masked_images = images.clone()
         masked_images[(masks > 0.5).repeat(3, 1, 1)] = -1
-        foreground_images = images.clone()
-        foreground_images[(masks < 0.5).repeat(3, 1, 1)] = -1
         masks = 1 - masks # 0是要inpaint的区域，1是背景
         
-        backgrounds = examples["background"].convert("RGB") if not isinstance(examples["background"], str) else Image.open(examples["background"]).convert("RGB")
-        backgrounds = image_transforms(backgrounds)
-        
-        examples["pixel_values"] = backgrounds
+        examples["pixel_values"] = images # original implementation is bkgd, will be noised
         examples["images"] = images
         examples["masked_images"] = masked_images
-        examples["foreground_images"] = foreground_images
         examples["masks"] = masks
 
         return examples
@@ -864,8 +858,6 @@ def collate_fn(examples):
     images = images.to(memory_format=torch.contiguous_format).float()
     masked_images = torch.stack([example["masked_images"] for example in examples])
     masked_images = masked_images.to(memory_format=torch.contiguous_format).float()
-    foreground_images = torch.stack([example["foreground_images"] for example in examples])
-    foreground_images = foreground_images.to(memory_format=torch.contiguous_format).float()
     masks = torch.stack([example["masks"] for example in examples])
     masks = masks.to(memory_format=torch.contiguous_format).float()
     # save_dir = '/home/yinzijin/BrushNet-main/examples/brushnet/image_temp'
@@ -884,7 +876,6 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values, 
             "images": images, 
             "masked_images": masked_images, 
-            "foreground_images": foreground_images,
             "masks": masks}
 
 
@@ -1339,8 +1330,6 @@ def main(args):
                 # Convert images to latent space
                 # vae encode
                 pixel_latents = encode_images(batch["pixel_values"], vae.to(accelerator.device), weight_dtype) # bg
-                pixel_img_latents = encode_images(batch["images"], vae.to(accelerator.device), weight_dtype) # 1,16,128,128
-                foreground_images_latents = encode_images(batch["foreground_images"], vae.to(accelerator.device), weight_dtype) # 1,16,128,128
                 pixel_masked_image_latents = encode_images(
                     batch["masked_images"], vae.to(accelerator.device), weight_dtype
                 )
@@ -1390,7 +1379,6 @@ def main(args):
                 # Question: Should we concatenate before adding noise?
                 concatenated_noisy_model_input = torch.cat([noisy_model_input, 
                                                             pixel_masked_image_latents,
-                                                            foreground_images_latents,
                                                             masks], dim=1)
                 # print(concatenated_noisy_model_input.shape)
                 # pack the latents.
