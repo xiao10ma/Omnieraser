@@ -23,7 +23,7 @@ import shutil
 from contextlib import nullcontext
 from pathlib import Path
 from safetensors.torch import load_file
-
+import cv2
 import accelerate
 import numpy as np
 import torch
@@ -39,7 +39,7 @@ from peft.utils import get_peft_model_state_dict
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
-
+import json
 import diffusers
 from diffusers import AutoencoderKL, FlowMatchEulerDiscreteScheduler, FluxTransformer2DModel
 from diffusers.optimization import get_scheduler
@@ -711,24 +711,66 @@ def get_train_dataset(args, accelerator):
             train_dataset = train_dataset.select(range(args.max_train_samples))
     return train_dataset
 
+def generate_random_quad_background_mask(foreground_mask, size_range=(64, 160), max_trials=100):
+    """
+    在前景 mask 的背景区域内生成一个随机四边形 mask。
+    返回: 四边形坐标点，mask (np.uint8, shape [H, W])
+    """
+    H, W = foreground_mask.shape
+    background_mask = (foreground_mask == 0).astype(np.uint8)
+
+    ys, xs = np.where(background_mask == 1)
+    if len(xs) == 0:
+        return None, None
+
+    for _ in range(max_trials):
+        # 随机选择一个中心点
+        idx = random.randint(0, len(xs) - 1)
+        cx, cy = xs[idx], ys[idx]
+
+        # 随机生成四边形的点（以中心点为基准，加偏移）
+        s_min, s_max = size_range
+        s = random.randint(s_min, s_max)
+        offset = np.random.randint(low=-s, high=s, size=(4, 2))
+
+        # 四边形的四个角
+        quad = np.array([
+            [cx + offset[0][0], cy + offset[0][1]],
+            [cx + offset[1][0], cy + offset[1][1]],
+            [cx + offset[2][0], cy + offset[2][1]],
+            [cx + offset[3][0], cy + offset[3][1]],
+        ], dtype=np.int32)
+
+        # 限制在图像边界内
+        quad[:, 0] = np.clip(quad[:, 0], 0, W - 1)
+        quad[:, 1] = np.clip(quad[:, 1], 0, H - 1)
+
+        # 创建 mask
+        poly_mask = np.zeros((H, W), dtype=np.uint8)
+        cv2.fillPoly(poly_mask, [quad], 1)
+
+        # 检查是否完全落在背景中
+        if np.all(foreground_mask[poly_mask == 1] == 0):
+            return poly_mask
+
+    return None
 
 class TrainRemovalDataset(torch.utils.data.Dataset):
     def __init__(self,
                  data_root,
                  resolution,
                  preprocess_fn=None):
-        self.root = data_root
-        self.maskroot = os.path.join(self.root, 'masks') # binray mask for inpainting
-        self.imageroot = os.path.join(self.root, 'images') # target image: BG
-        self.bgroot = os.path.join(self.root, 'gt') # target image: BG
-        
-        # RORD专用，其他数据集请注释。
-        # self.maskroot = os.path.join(self.root, 'masks') # binray mask for inpainting
-        # self.imageroot = os.path.join(self.root, 'images') # target image: BG
-        # self.bgroot = os.path.join(self.root, 'background') # target image: BG
+        self.root = 'nuscenes_image_paths_mini.json'
 
-        self.mask_name = os.listdir(self.maskroot)
-        self._length = len(self.mask_name)
+        self.mask_name = []
+        self.image_name = []
+
+        img_meta = json.load(open(self.root))
+        for scene_name, scene_meta in img_meta.items():
+            for cam_name, cam_meta in scene_meta.items():
+                for idx in range(len(cam_meta)):
+                    self.mask_name.append(cam_meta['mask'][idx])
+                    self.image_name.append(cam_meta['image'][idx])
 
         # Store transformation function
         self.resolution = resolution
@@ -736,17 +778,20 @@ class TrainRemovalDataset(torch.utils.data.Dataset):
         # print(self.mask_path[1])
         
     def __len__(self):
-        return self._length
+        return len(self.mask_name)
     
     def __getitem__(self, index):
-        mask = Image.open(os.path.join(self.maskroot, self.mask_name[index])).convert('L') # load the binary mask
-        background = Image.open(os.path.join(self.bgroot, self.mask_name[index])).convert('RGB') # load the target image
-        image = Image.open(os.path.join(self.imageroot, self.mask_name[index])).convert('RGB') # load the target image
+        fore_mask = Image.open(self.mask_name[index]).convert('L') # load the binary mask
+        image = Image.open(self.image_name[index]).convert('RGB') # load the target image
+
+        mask = generate_random_quad_background_mask(np.asarray(fore_mask))
+        if mask is None:
+            mask = np.asarray(fore_mask) == 0
+            mask = Image.fromarray(mask)
         
         sample = {
             "images": image,
             "masks": mask,
-            "background": background
         }
         
         # Apply the transformation if available
