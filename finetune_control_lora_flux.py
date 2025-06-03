@@ -325,7 +325,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--checkpoints_total_limit",
         type=int,
-        default=None,
+        default=2,
         help=("Max number of checkpoints to store."),
     )
     parser.add_argument(
@@ -458,6 +458,12 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
+        "--group_name",
+        type=str,
+        default=None,
+        help="The group name for the experiment.",
+    )
+    parser.add_argument(
         "--mixed_precision",
         type=str,
         default=None,
@@ -547,7 +553,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--num_validation_images",
         type=int,
-        default=4,
+        default=2,
         help="Number of images to be generated for each `--validation_image`, `--validation_prompt` pair",
     )
     parser.add_argument(
@@ -1266,7 +1272,13 @@ def main(args):
         tracker_config.pop("validation_image")
         tracker_config.pop("validation_mask")
         
-        accelerator.init_trackers(args.tracker_project_name, config=tracker_config)
+        accelerator.init_trackers(
+            args.tracker_project_name,
+            config=tracker_config,
+            init_kwargs={
+                "group": args.group_name,
+            }
+        )
 
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
@@ -1336,141 +1348,140 @@ def main(args):
     for epoch in range(first_epoch, args.num_train_epochs):
         flux_transformer.train()
         for step, batch in enumerate(train_dataloader):
-            with accelerator.accumulate(flux_transformer):
-                # Convert images to latent space
-                # vae encode
-                pixel_latents = encode_images(batch["pixel_values"], vae.to(accelerator.device), weight_dtype) # bg
-                pixel_masked_image_latents = encode_images(
-                    batch["masked_images"], vae.to(accelerator.device), weight_dtype
+            # Convert images to latent space
+            # vae encode
+            pixel_latents = encode_images(batch["pixel_values"], vae.to(accelerator.device), weight_dtype) # bg
+            pixel_masked_image_latents = encode_images(
+                batch["masked_images"], vae.to(accelerator.device), weight_dtype
+            )
+
+            # masks = batch["masks"][:, 0, :, :]
+            # masks = masks.view(
+            #     B, 
+            #     2*(int(H) // (vae_scale_factor * 2)), 
+            #     vae_scale_factor, 
+            #     2*(int(W) // (vae_scale_factor * 2)), 
+            #     vae_scale_factor
+            # )
+            # masks = masks.permute(0, 2, 4, 1, 3)
+            # masks = masks.reshape(
+            #     masks.shape[0], 
+            #     vae_scale_factor * vae_scale_factor, 
+            #     2*(int(H) // (vae_scale_factor * 2)), 
+            #     2*(int(W) // (vae_scale_factor * 2))
+            # ).to(weight_dtype)
+
+            masks = torch.nn.functional.interpolate(
+                batch["masks"], size=(batch["masks"].shape[2] // vae_scale_factor , batch["masks"].shape[3] // vae_scale_factor)
+                ).to(weight_dtype)
+            masks = masks.repeat(1, pixel_latents.shape[1], 1, 1)
+            if args.offload:
+                # offload vae to CPU.
+                vae.cpu()
+
+            # Sample a random timestep for each image
+            # for weighting schemes where we sample timesteps non-uniformly
+            bsz = pixel_latents.shape[0]
+            noise = torch.randn_like(pixel_latents, device=accelerator.device, dtype=weight_dtype)
+            u = compute_density_for_timestep_sampling(
+                weighting_scheme=args.weighting_scheme,
+                batch_size=bsz,
+                logit_mean=args.logit_mean,
+                logit_std=args.logit_std,
+                mode_scale=args.mode_scale,
+            )
+            indices = (u * noise_scheduler_copy.config.num_train_timesteps).long()
+            timesteps = noise_scheduler_copy.timesteps[indices].to(device=pixel_latents.device)
+
+            # Add noise according to flow matching.
+            sigmas = get_sigmas(timesteps, n_dim=pixel_latents.ndim, dtype=pixel_latents.dtype)
+            noisy_model_input = (1.0 - sigmas) * pixel_latents + sigmas * noise
+            # Concatenate across channels.
+            # Question: Should we concatenate before adding noise?
+            concatenated_noisy_model_input = torch.cat([noisy_model_input, 
+                                                        pixel_masked_image_latents,
+                                                        masks], dim=1)
+            # print(concatenated_noisy_model_input.shape)
+            # pack the latents.
+            packed_noisy_model_input = FluxControlRemovalPipeline._pack_latents( # 1,4096,256
+                concatenated_noisy_model_input,
+                batch_size=bsz,
+                num_channels_latents=concatenated_noisy_model_input.shape[1],
+                height=concatenated_noisy_model_input.shape[2],
+                width=concatenated_noisy_model_input.shape[3],
+            )
+            # print(packed_noisy_model_input.shape)
+            # latent image ids for RoPE.
+            latent_image_ids = FluxControlRemovalPipeline._prepare_latent_image_ids(
+                bsz,
+                concatenated_noisy_model_input.shape[2] // 2,
+                concatenated_noisy_model_input.shape[3] // 2,
+                accelerator.device,
+                weight_dtype,
+            )
+
+            # handle guidance
+            if unwrap_model(flux_transformer).config.guidance_embeds:
+                guidance_vec = torch.full(
+                    (bsz,),
+                    args.guidance_scale,
+                    device=noisy_model_input.device,
+                    dtype=weight_dtype,
                 )
+            else:
+                guidance_vec = None
 
-                # masks = batch["masks"][:, 0, :, :]
-                # masks = masks.view(
-                #     B, 
-                #     2*(int(H) // (vae_scale_factor * 2)), 
-                #     vae_scale_factor, 
-                #     2*(int(W) // (vae_scale_factor * 2)), 
-                #     vae_scale_factor
-                # )
-                # masks = masks.permute(0, 2, 4, 1, 3)
-                # masks = masks.reshape(
-                #     masks.shape[0], 
-                #     vae_scale_factor * vae_scale_factor, 
-                #     2*(int(H) // (vae_scale_factor * 2)), 
-                #     2*(int(W) // (vae_scale_factor * 2))
-                # ).to(weight_dtype)
-
-                masks = torch.nn.functional.interpolate(
-                    batch["masks"], size=(batch["masks"].shape[2] // vae_scale_factor , batch["masks"].shape[3] // vae_scale_factor)
-                    ).to(weight_dtype)
-                masks = masks.repeat(1, pixel_latents.shape[1], 1, 1)
-                if args.offload:
-                    # offload vae to CPU.
-                    vae.cpu()
-
-                # Sample a random timestep for each image
-                # for weighting schemes where we sample timesteps non-uniformly
-                bsz = pixel_latents.shape[0]
-                noise = torch.randn_like(pixel_latents, device=accelerator.device, dtype=weight_dtype)
-                u = compute_density_for_timestep_sampling(
-                    weighting_scheme=args.weighting_scheme,
-                    batch_size=bsz,
-                    logit_mean=args.logit_mean,
-                    logit_std=args.logit_std,
-                    mode_scale=args.mode_scale,
+            # text encoding.
+            captions = "There is nothing here."
+            text_encoding_pipeline = text_encoding_pipeline.to("cuda")
+            with torch.no_grad():
+                prompt_embeds, pooled_prompt_embeds, text_ids = text_encoding_pipeline.encode_prompt(
+                    captions, prompt_2=None
                 )
-                indices = (u * noise_scheduler_copy.config.num_train_timesteps).long()
-                timesteps = noise_scheduler_copy.timesteps[indices].to(device=pixel_latents.device)
+            # this could be optimized by not having to do any text encoding and just
+            # doing zeros on specified shapes for `prompt_embeds` and `pooled_prompt_embeds`
+            if args.proportion_empty_prompts and random.random() < args.proportion_empty_prompts:
+                prompt_embeds.zero_()
+                pooled_prompt_embeds.zero_()
+            if args.offload:
+                text_encoding_pipeline = text_encoding_pipeline.to("cpu")
 
-                # Add noise according to flow matching.
-                sigmas = get_sigmas(timesteps, n_dim=pixel_latents.ndim, dtype=pixel_latents.dtype)
-                noisy_model_input = (1.0 - sigmas) * pixel_latents + sigmas * noise
-                # Concatenate across channels.
-                # Question: Should we concatenate before adding noise?
-                concatenated_noisy_model_input = torch.cat([noisy_model_input, 
-                                                            pixel_masked_image_latents,
-                                                            masks], dim=1)
-                # print(concatenated_noisy_model_input.shape)
-                # pack the latents.
-                packed_noisy_model_input = FluxControlRemovalPipeline._pack_latents( # 1,4096,256
-                    concatenated_noisy_model_input,
-                    batch_size=bsz,
-                    num_channels_latents=concatenated_noisy_model_input.shape[1],
-                    height=concatenated_noisy_model_input.shape[2],
-                    width=concatenated_noisy_model_input.shape[3],
-                )
-                # print(packed_noisy_model_input.shape)
-                # latent image ids for RoPE.
-                latent_image_ids = FluxControlRemovalPipeline._prepare_latent_image_ids(
-                    bsz,
-                    concatenated_noisy_model_input.shape[2] // 2,
-                    concatenated_noisy_model_input.shape[3] // 2,
-                    accelerator.device,
-                    weight_dtype,
-                )
+            # Predict.
+            model_pred = flux_transformer(
+                hidden_states=packed_noisy_model_input,
+                timestep=timesteps / 1000,
+                guidance=guidance_vec,
+                pooled_projections=pooled_prompt_embeds,
+                encoder_hidden_states=prompt_embeds,
+                txt_ids=text_ids,
+                img_ids=latent_image_ids,
+                return_dict=False,
+            )[0]
+            model_pred = FluxControlRemovalPipeline._unpack_latents(
+                model_pred,
+                height=noisy_model_input.shape[2] * vae_scale_factor,
+                width=noisy_model_input.shape[3] * vae_scale_factor,
+                vae_scale_factor=vae_scale_factor,
+            )
+            # these weighting schemes use a uniform timestep sampling
+            # and instead post-weight the loss
+            weighting = compute_loss_weighting_for_sd3(weighting_scheme=args.weighting_scheme, sigmas=sigmas)
 
-                # handle guidance
-                if unwrap_model(flux_transformer).config.guidance_embeds:
-                    guidance_vec = torch.full(
-                        (bsz,),
-                        args.guidance_scale,
-                        device=noisy_model_input.device,
-                        dtype=weight_dtype,
-                    )
-                else:
-                    guidance_vec = None
+            # flow-matching loss
+            target = noise - pixel_latents
+            loss = torch.mean(
+                (weighting.float() * (model_pred.float() - target.float()) ** 2).reshape(target.shape[0], -1),
+                1,
+            )
+            loss = loss.mean()
+            accelerator.backward(loss)
 
-                # text encoding.
-                captions = "There is nothing here."
-                text_encoding_pipeline = text_encoding_pipeline.to("cuda")
-                with torch.no_grad():
-                    prompt_embeds, pooled_prompt_embeds, text_ids = text_encoding_pipeline.encode_prompt(
-                        captions, prompt_2=None
-                    )
-                # this could be optimized by not having to do any text encoding and just
-                # doing zeros on specified shapes for `prompt_embeds` and `pooled_prompt_embeds`
-                if args.proportion_empty_prompts and random.random() < args.proportion_empty_prompts:
-                    prompt_embeds.zero_()
-                    pooled_prompt_embeds.zero_()
-                if args.offload:
-                    text_encoding_pipeline = text_encoding_pipeline.to("cpu")
-
-                # Predict.
-                model_pred = flux_transformer(
-                    hidden_states=packed_noisy_model_input,
-                    timestep=timesteps / 1000,
-                    guidance=guidance_vec,
-                    pooled_projections=pooled_prompt_embeds,
-                    encoder_hidden_states=prompt_embeds,
-                    txt_ids=text_ids,
-                    img_ids=latent_image_ids,
-                    return_dict=False,
-                )[0]
-                model_pred = FluxControlRemovalPipeline._unpack_latents(
-                    model_pred,
-                    height=noisy_model_input.shape[2] * vae_scale_factor,
-                    width=noisy_model_input.shape[3] * vae_scale_factor,
-                    vae_scale_factor=vae_scale_factor,
-                )
-                # these weighting schemes use a uniform timestep sampling
-                # and instead post-weight the loss
-                weighting = compute_loss_weighting_for_sd3(weighting_scheme=args.weighting_scheme, sigmas=sigmas)
-
-                # flow-matching loss
-                target = noise - pixel_latents
-                loss = torch.mean(
-                    (weighting.float() * (model_pred.float() - target.float()) ** 2).reshape(target.shape[0], -1),
-                    1,
-                )
-                loss = loss.mean()
-                accelerator.backward(loss)
-
-                if accelerator.sync_gradients:
-                    params_to_clip = flux_transformer.parameters()
-                    accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
-                optimizer.step()
-                lr_scheduler.step()
-                optimizer.zero_grad()
+            if accelerator.sync_gradients:
+                params_to_clip = flux_transformer.parameters()
+                accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
+            optimizer.step()
+            lr_scheduler.step()
+            optimizer.zero_grad()
 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
@@ -1483,6 +1494,7 @@ def main(args):
                         # _before_ saving state, check if this save would set us over the `checkpoints_total_limit`
                         if args.checkpoints_total_limit is not None:
                             checkpoints = os.listdir(args.output_dir)
+                            logger.info(f"checkpoints: {checkpoints}")
                             checkpoints = [d for d in checkpoints if d.startswith("checkpoint")]
                             checkpoints = sorted(checkpoints, key=lambda x: int(x.split("-")[1]))
 
