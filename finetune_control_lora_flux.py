@@ -1509,8 +1509,17 @@ def main(args):
                                 logger.info(f"removing checkpoints: {', '.join(removing_checkpoints)}")
 
                                 for removing_checkpoint in removing_checkpoints:
-                                    removing_checkpoint = os.path.join(args.output_dir, removing_checkpoint)
-                                    shutil.rmtree(removing_checkpoint)
+                                    full_path = os.path.join(args.output_dir, removing_checkpoint)
+
+                                    if os.path.exists(full_path):
+                                        try:
+                                            shutil.rmtree(full_path)
+                                        except FileNotFoundError as e:
+                                            logger.warning(f"File not found during deletion: {e.filename}, skipping.")
+                                        except Exception as e:
+                                            logger.error(f"Failed to remove checkpoint {full_path}: {e}")
+                                    else:
+                                        logger.warning(f"Checkpoint path does not exist: {full_path}, skipping.")
 
                         save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
                         accelerator.save_state(save_path)
