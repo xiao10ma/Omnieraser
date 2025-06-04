@@ -154,7 +154,7 @@ def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_f
             image = image.resize((args.resolution, args.resolution))
             images.append(image)
         image_logs.append(
-            {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
+            {"validation_image": validation_image, "validation_mask": validation_mask, "images": images, "validation_prompt": validation_prompt}
         )
 
     tracker_key = "test" if is_final_validation else "validation"
@@ -163,9 +163,11 @@ def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_f
             for log in image_logs:
                 images = log["images"]
                 validation_prompt = log["validation_prompt"]
+                validation_mask = log["validation_mask"]
                 validation_image = log["validation_image"]
                 formatted_images = []
                 formatted_images.append(np.asarray(validation_image))
+                formatted_images.append(np.asarray(validation_mask))
                 for image in images:
                     formatted_images.append(np.asarray(image))
                 formatted_images = np.stack(formatted_images)
@@ -897,7 +899,7 @@ def main(args):
         raise ValueError("`gaussian` LoRA init scheme isn't supported when `use_lora_bias` is True.")
 
     logging_out_dir = Path(args.output_dir, args.logging_dir)
-
+    print(f"logging_out_dir: {logging_out_dir}")
     if torch.backends.mps.is_available() and args.mixed_precision == "bf16":
         # due to pytorch#99272, MPS does not yet support bfloat16.
         raise ValueError(
@@ -1016,18 +1018,18 @@ def main(args):
     else:
         target_modules = [
             "x_embedder",
-            "attn.to_k",
-            "attn.to_q",
-            "attn.to_v",
-            "attn.to_out.0",
-            "attn.add_k_proj",
-            "attn.add_q_proj",
-            "attn.add_v_proj",
-            "attn.to_add_out",
-            "ff.net.0.proj",
-            "ff.net.2",
-            "ff_context.net.0.proj",
-            "ff_context.net.2",
+            # "attn.to_k",
+            # "attn.to_q",
+            # "attn.to_v",
+            # "attn.to_out.0",
+            # "attn.add_k_proj",
+            # "attn.add_q_proj",
+            # "attn.add_v_proj",
+            # "attn.to_add_out",
+            # "ff.net.0.proj",
+            # "ff.net.2",
+            # "ff_context.net.0.proj",
+            # "ff_context.net.2",
         ]
     transformer_lora_config = LoraConfig(
         r=args.rank,
