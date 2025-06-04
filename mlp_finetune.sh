@@ -47,7 +47,7 @@ for rank in "${ranks[@]}"; do
                 --num_train_epochs 100 \
                 --rank ${rank} \
                 --gaussian_init_lora \
-                --logging_dir tensorboard/deepseed-zero-stage-2 \
+                --logging_dir tensorboard \
                 --tracker_project_name "flux_train_grid_search" \
                 --report_to tensorboard \
                 --validation_steps 10 \
