@@ -72,7 +72,7 @@ def encode_images(pixels: torch.Tensor, vae: torch.nn.Module, weight_dtype):
     return pixel_latents.to(weight_dtype)
 
 
-def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_final_validation=False):
+def log_validation(flux_transformer, args, accelerator, weight_dtype, step, image_paths=None, mask_paths=None, is_final_validation=False):
     logger.info("Running validation... ")
 
     if not is_final_validation:
@@ -105,22 +105,27 @@ def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_f
     else:
         generator = torch.Generator(device=accelerator.device).manual_seed(args.seed)
 
-    if len(args.validation_image) == len(args.validation_prompt):
-        validation_images = args.validation_image
-        validation_masks = args.validation_mask
-        validation_prompts = args.validation_prompt
-    elif len(args.validation_image) == 1:
-        validation_images = args.validation_image * len(args.validation_prompt)
-        validation_masks = args.validation_mask * len(args.validation_prompt)
-        validation_prompts = args.validation_prompt
-    elif len(args.validation_prompt) == 1:
-        validation_images = args.validation_image
-        validation_masks = args.validation_mask
-        validation_prompts = args.validation_prompt * len(args.validation_image)
+    if image_paths is not None and mask_paths is not None:
+        validation_images = image_paths
+        validation_masks = mask_paths
+        validation_prompts = ["There is nothing here."] * len(image_paths)
     else:
-        raise ValueError(
-            "number of `args.validation_image` and `args.validation_prompt` should be checked in `parse_args`"
-        )
+        if len(args.validation_image) == len(args.validation_prompt):
+            validation_images = args.validation_image
+            validation_masks = args.validation_mask
+            validation_prompts = args.validation_prompt
+        elif len(args.validation_image) == 1:
+            validation_images = args.validation_image * len(args.validation_prompt)
+            validation_masks = args.validation_mask * len(args.validation_prompt)
+            validation_prompts = args.validation_prompt
+        elif len(args.validation_prompt) == 1:
+            validation_images = args.validation_image
+            validation_masks = args.validation_mask
+            validation_prompts = args.validation_prompt * len(args.validation_image)
+        else:
+            raise ValueError(
+                "number of `args.validation_image` and `args.validation_prompt` should be checked in `parse_args`"
+            )
 
     image_logs = []
     if is_final_validation or torch.backends.mps.is_available():
@@ -138,7 +143,7 @@ def log_validation(flux_transformer, args, accelerator, weight_dtype, step, is_f
         images = []
 
         # print(args.num_validation_images)
-        for _ in range(args.num_validation_images):
+        for _ in range(len(validation_images)):
             with autocast_ctx:
                 image = pipeline(
                     prompt=validation_prompt,
@@ -802,6 +807,8 @@ class TrainRemovalDataset(torch.utils.data.Dataset):
         sample = {
             "images": image,
             "masks": mask,
+            "image_path": self.image_name[index],
+            "mask_path": self.mask_name[index],
         }
         
         # Apply the transformation if available
@@ -882,11 +889,16 @@ def collate_fn(examples):
     #     save_image(mask, os.path.join(save_dir, f'mask_{i}.png'), normalize=False)
     
     # assert False
+
+    image_paths = [example["image_path"] for example in examples]
+    mask_paths = [example["mask_path"] for example in examples]
     
     return {"pixel_values": pixel_values, 
             "images": images, 
             "masked_images": masked_images, 
-            "masks": masks}
+            "masks": masks,
+            "image_paths": image_paths,
+            "mask_paths": mask_paths}
 
 
 def main(args):
@@ -1534,6 +1546,8 @@ def main(args):
                             accelerator=accelerator,
                             weight_dtype=weight_dtype,
                             step=global_step,
+                            image_paths=batch['image_paths'],
+                            mask_paths=batch['mask_paths']
                         )
 
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
