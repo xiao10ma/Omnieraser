@@ -1536,7 +1536,16 @@ def main(args):
                                         logger.warning(f"Checkpoint path does not exist: {full_path}, skipping.")
 
                         save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
-                        accelerator.save_state(save_path)
+                        os.makedirs(save_path, exist_ok=True)
+                        # accelerator.save_state(save_path)
+
+                        flux_transformer = unwrap_model(flux_transformer)
+                        transformer_lora_layers = get_peft_model_state_dict(flux_transformer)
+                        
+                        FluxControlRemovalPipeline.save_lora_weights(
+                            save_directory=save_path,
+                            transformer_lora_layers=transformer_lora_layers,
+                        )
                         logger.info(f"Saved state to {save_path}")
 
                     if args.validation_prompt is not None and global_step % args.validation_steps == 0:
